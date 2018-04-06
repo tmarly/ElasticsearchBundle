@@ -130,8 +130,13 @@ class MetadataCollector
             $bundle = $name;
         }
 
-        $bundleNamespace = $this->finder->getBundleClass($bundle);
-        $bundleNamespace = substr($bundleNamespace, 0, strrpos($bundleNamespace, '\\'));
+        $bundleClass = $this->finder->getBundleClass($bundle);
+        if ($bundleClass) {
+            $namespace = substr($bundleClass, 0, strrpos($bundleClass, '\\'));
+        } else {
+            // not a bundle, so should be the sf4 'App' namespace
+            $namespace = "App\\" . $bundle;
+        }
 
         if (!count($documents)) {
             return [];
@@ -140,7 +145,7 @@ class MetadataCollector
         // Loop through documents found in bundle.
         foreach ($documents as $document) {
             $documentReflection = new \ReflectionClass(
-                $bundleNamespace .
+                $namespace .
                 '\\' . str_replace('/', '\\', $documentDir) .
                 '\\' . $document
             );

@@ -2,6 +2,11 @@ parameters:
     es.logging.path: "%kernel.logs_dir%/elasticsearch_%kernel.environment%.log"
 
 services:
+    ONGR\ElasticsearchBundle\Command\:
+        resource: '../../Command'
+        tags:
+            - { name: console.command }
+
     es.export:
         class: ONGR\ElasticsearchBundle\Service\ExportService
 
@@ -21,7 +26,7 @@ services:
 
     es.document_finder:
         class: ONGR\ElasticsearchBundle\Mapping\DocumentFinder
-        arguments: ["%kernel.bundles%"]
+        arguments: ["%kernel.bundles%", "%kernel.root_dir%"]
         public: false
 
     es.document_parser:
@@ -69,3 +74,4 @@ services:
     es.generate:
         class: ONGR\ElasticsearchBundle\Service\GenerateService
         arguments: ["@es.generator.document", "@filesystem"]
+

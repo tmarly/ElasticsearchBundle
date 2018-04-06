@@ -26,15 +26,17 @@ class DocumentFinder
      */
     private $documentDir;
 
+    private $rootDir;
     /**
      * Constructor.
      *
      * @param array $bundles Parameter kernel.bundles from service container.
      */
-    public function __construct(array $bundles)
+    public function __construct(array $bundles, $rootDir)
     {
         $this->documentDir = 'Document';
         $this->bundles = $bundles;
+        $this->rootDir = $rootDir;
     }
 
     /**
@@ -98,7 +100,7 @@ class DocumentFinder
      *
      * @param string $name
      *
-     * @return string
+     * @return false if not found
      *
      * @throws \LogicException
      */
@@ -108,7 +110,7 @@ class DocumentFinder
             return $this->bundles[$name];
         }
 
-        throw new \LogicException(sprintf('Bundle \'%s\' does not exist.', $name));
+        return false;
     }
 
     /**
@@ -132,14 +134,21 @@ class DocumentFinder
         if (!$documentsDirectory) {
             $documentsDirectory = $this->documentDir;
         }
-
-        $bundleReflection = new \ReflectionClass($this->getBundleClass($bundle));
-
         $documentsDirectory = DIRECTORY_SEPARATOR . str_replace('\\', '/', $documentsDirectory) . DIRECTORY_SEPARATOR;
-        $directory = dirname($bundleReflection->getFileName()) . $documentsDirectory;
+
+        $bundleClass = $this->getBundleClass($bundle);
+        if ($bundleClass) {
+            $bundleReflection = new \ReflectionClass($bundleClass);
+            $directory = dirname($bundleReflection->getFileName()) . $documentsDirectory;
+        } else {
+            // no bundle found, so let's try the standard 'src' folder in sf4
+            $directory = $this->rootDir . DIRECTORY_SEPARATOR . str_replace('\\', '/', $bundle);
+            $directory .= $documentsDirectory;
+        }
+
 
         if (!is_dir($directory)) {
-            return [];
+            throw new \LogicException("The folder $directory, configured in the yaml file, has not been found !");
         }
 
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
